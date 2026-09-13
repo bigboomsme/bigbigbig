@@ -1,0 +1,497 @@
+--[[ 
+    BOOMSME ALL-IN-ONE SCRIPT (FLING GRAB ENGINE)
+    Executor Style: RC7 Design
+    Main GUI Style: c00lkid Nostalgia GUI
+    Engine: Advanced Body Fling, Destructible Collision, Anti-Fling Self, Grab System R6/R15
+--]]
+
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local Lighting = game:GetService("Lighting")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+-- Assets Configuration
+local ID_WALLPAPER = "rbxthumb://type=Asset&id=11818627075&w=420&h=420"
+local ID_PARTICLE  = "rbxthumb://type=Asset&id=122998538&w=420&h=420"
+local ID_DECAL     = "rbxthumb://type=Asset&id=2179045360&w=420&h=420"
+local ID_SKYBOX    = "rbxthumb://type=Asset&id=7866490162&w=420&h=420"
+local ID_FACE      = "rbxthumb://type=Asset&id=631727250&w=420&h=420"
+local ID_MUSIC     = "rbxassetid://15689450026"
+
+--------------------------------------------------
+-- 1. UTILITY & ANTI-FLING SYSTEM (SELF PROTECTION)
+--------------------------------------------------
+local function ApplyAntiFling(char)
+    if not char then return end
+    for _, part in pairs(char:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.CustomPhysicalProperties = PhysicalProperties.new(100, 0.3, 0.5, 1, 1)
+            part.CanCollide = true
+        end
+    end
+end
+
+if LocalPlayer.Character then ApplyAntiFling(LocalPlayer.Character) end
+LocalPlayer.CharacterAdded:Connect(ApplyAntiFling)
+
+--------------------------------------------------
+-- 2. RC7 EXECUTOR GUI BUILDER
+--------------------------------------------------
+local Rc7ScreenGui = Instance.new("ScreenGui")
+Rc7ScreenGui.Name = "RC7_Executor"
+Rc7ScreenGui.ResetOnSpawn = false
+Rc7ScreenGui.Parent = PlayerGui
+
+local Rc7Main = Instance.new("ImageLabel")
+Rc7Main.Name = "MainFrame"
+Rc7Main.Size = UDim2.new(0, 350, 0, 250)
+Rc7Main.Position = UDim2.new(0.3, 0, 0.3, 0)
+Rc7Main.Image = ID_WALLPAPER
+Rc7Main.Active = true
+Rc7Main.Draggable = true
+Rc7Main.Parent = Rc7ScreenGui
+
+local Rc7Title = Instance.new("TextLabel")
+Rc7Title.Size = UDim2.new(1, 0, 0, 25)
+Rc7Title.Text = "my my s*ck my d*ck"
+Rc7Title.TextColor3 = Color3.fromRGB(255, 0, 0)
+Rc7Title.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+Rc7Title.BackgroundTransparency = 0.3
+Rc7Title.Font = Enum.Font.SourceSansBold
+Rc7Title.TextSize = 16
+Rc7Title.Parent = Rc7Main
+
+local InputBox = Instance.new("TextBox")
+InputBox.Size = UDim2.new(0.68, 0, 0.6, 0)
+InputBox.Position = UDim2.new(0.04, 0, 0.15, 0)
+InputBox.Text = ""
+InputBox.PlaceholderText = "Type script or command here..."
+InputBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+InputBox.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+InputBox.MultiLine = true
+InputBox.TextXAlignment = Enum.TextXAlignment.Left
+InputBox.TextYAlignment = Enum.TextYAlignment.Top
+InputBox.Parent = Rc7Main
+
+local function CreateButton(name, text, pos, size, parent)
+    local btn = Instance.new("TextButton")
+    btn.Name = name
+    btn.Text = text
+    btn.Size = size
+    btn.Position = pos
+    btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.Font = Enum.Font.SourceSansBold
+    btn.TextSize = 14
+    btn.Parent = parent
+    return btn
+end
+
+local BtnExecute   = CreateButton("Execute", "Execute", UDim2.new(0.75, 0, 0.15, 0), UDim2.new(0.21, 0, 0.1, 0), Rc7Main)
+local BtnClear     = CreateButton("Clear", "Clear", UDim2.new(0.75, 0, 0.27, 0), UDim2.new(0.21, 0, 0.1, 0), Rc7Main)
+local BtnR6        = CreateButton("R6", "R6", UDim2.new(0.75, 0, 0.39, 0), UDim2.new(0.21, 0, 0.1, 0), Rc7Main)
+local BtnR15       = CreateButton("R15", "R15", UDim2.new(0.75, 0, 0.51, 0), UDim2.new(0.21, 0, 0.1, 0), Rc7Main)
+local BtnRJ        = CreateButton("RJ", "Rejoin", UDim2.new(0.75, 0, 0.63, 0), UDim2.new(0.21, 0, 0.1, 0), Rc7Main)
+local BtnDelete    = CreateButton("Delete", "Delete GUI", UDim2.new(0.04, 0, 0.8, 0), UDim2.new(0.43, 0, 0.12, 0), Rc7Main)
+local BtnNewSession= CreateButton("NewSession", "New Session", UDim2.new(0.5, 0, 0.8, 0), UDim2.new(0.46, 0, 0.12, 0), Rc7Main)
+
+--------------------------------------------------
+-- 3. MAIN GUI (c00lkid STYLE)
+--------------------------------------------------
+local CoolGui = Instance.new("ScreenGui")
+CoolGui.Name = "boomsme_c00lkid"
+CoolGui.Enabled = false
+CoolGui.ResetOnSpawn = false
+CoolGui.Parent = PlayerGui
+
+local CoolMain = Instance.new("ImageLabel")
+CoolMain.Name = "MainFrame"
+CoolMain.Size = UDim2.new(0, 220, 0, 320)
+CoolMain.Position = UDim2.new(0.05, 0, 0.2, 0)
+CoolMain.Image = ID_WALLPAPER
+CoolMain.Active = true
+CoolMain.Draggable = true
+CoolMain.Parent = CoolGui
+
+local ProfileIcon = Instance.new("ImageLabel")
+ProfileIcon.Size = UDim2.new(0, 30, 0, 30)
+ProfileIcon.Position = UDim2.new(0.04, 0, 0.03, 0)
+ProfileIcon.Image = ID_PARTICLE
+ProfileIcon.BackgroundTransparency = 1
+ProfileIcon.Parent = CoolMain
+
+local CoolTitle = Instance.new("TextLabel")
+CoolTitle.Size = UDim2.new(0, 160, 0, 15)
+CoolTitle.Position = UDim2.new(0.22, 0, 0.03, 0)
+CoolTitle.Text = "boomsme GUI [5:5]"
+CoolTitle.TextColor3 = Color3.fromRGB(255, 0, 0)
+CoolTitle.Font = Enum.Font.SourceSansBold
+CoolTitle.TextSize = 14
+CoolTitle.TextXAlignment = Enum.TextXAlignment.Left
+CoolTitle.BackgroundTransparency = 1
+CoolTitle.Parent = CoolMain
+
+local UserLabel = Instance.new("TextLabel")
+UserLabel.Size = UDim2.new(0, 160, 0, 15)
+UserLabel.Position = UDim2.new(0.22, 0, 0.09, 0)
+UserLabel.Text = "User: " .. LocalPlayer.Name
+UserLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+UserLabel.Font = Enum.Font.SourceSans
+UserLabel.TextSize = 12
+UserLabel.TextXAlignment = Enum.TextXAlignment.Left
+UserLabel.BackgroundTransparency = 1
+UserLabel.Parent = CoolMain
+
+local function CreateCoolBtn(text, yPos)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0.9, 0, 0, 25)
+    btn.Position = UDim2.new(0.05, 0, 0, yPos)
+    btn.Text = text
+    btn.Font = Enum.Font.SourceSansBold
+    btn.TextSize = 16
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    btn.BackgroundTransparency = 0.5
+    btn.Parent = CoolMain
+    return btn
+end
+
+local BtnParticel  = CreateCoolBtn("Particle & Trails", 50)
+local BtnDecalSpam = CreateCoolBtn("Decal & Face Spam", 80)
+local BtnSkybox    = CreateCoolBtn("Horror Skybox", 110)
+local BtnMusic     = CreateCoolBtn("Play Horror Music", 140)
+local BtnDislocate = CreateCoolBtn("Dislocate Body Parts", 170)
+local BtnDestruction = CreateCoolBtn("Destruction Engine", 200)
+local BtnFire      = CreateCoolBtn("Full Map Fire", 230)
+local BtnFly       = CreateCoolBtn("Admin Fly Engine", 260)
+local BtnGrabMode  = CreateCoolBtn("Enable Grab Mode", 290)
+
+--------------------------------------------------
+-- 4. OVERLAY SCREEN BANNER & MUSIC
+--------------------------------------------------
+local BannerGui = Instance.new("ScreenGui")
+BannerGui.Name = "HackedBanner"
+BannerGui.Parent = PlayerGui
+
+local BannerFrame = Instance.new("Frame")
+BannerFrame.Size = UDim2.new(1, 0, 0, 60)
+BannerFrame.Position = UDim2.new(0, 0, 0.02, 0)
+BannerFrame.BackgroundTransparency = 1
+BannerFrame.Visible = false
+BannerFrame.Parent = BannerGui
+
+local BannerIcon = Instance.new("ImageLabel")
+BannerIcon.Size = UDim2.new(0, 50, 0, 50)
+BannerIcon.Position = UDim2.new(0.05, 0, 0.1, 0)
+BannerIcon.Image = ID_PARTICLE
+BannerIcon.BackgroundTransparency = 1
+BannerIcon.Parent = BannerFrame
+
+local BannerText = Instance.new("TextLabel")
+BannerText.Size = UDim2.new(0.8, 0, 1, 0)
+BannerText.Position = UDim2.new(0.15, 0, 0, 0)
+BannerText.Text = "game hacked by bigboomsme"
+BannerText.TextColor3 = Color3.fromRGB(255, 0, 0)
+BannerText.TextScaled = true
+BannerText.Font = Enum.Font.SourceSansBold
+BannerText.BackgroundTransparency = 1
+BannerText.Parent = BannerFrame
+
+local Sound = Instance.new("Sound")
+Sound.SoundId = ID_MUSIC
+Sound.Volume = 2
+Sound.Looped = true
+Sound.Parent = Workspace
+
+--------------------------------------------------
+-- 5. FUNCTIONALITIES IMPLEMENTATION
+--------------------------------------------------
+local function OnChat(msg)
+    if InputBox.Text == ":bigboomsme:" or msg == ":bigboomsme:" then
+        CoolGui.Enabled = true
+        BannerFrame.Visible = true
+    end
+end
+
+LocalPlayer.Chatted:Connect(OnChat)
+
+BtnExecute.MouseButton1Click:Connect(function() OnChat(InputBox.Text) end)
+BtnClear.MouseButton1Click:Connect(function() InputBox.Text = "" end)
+BtnDelete.MouseButton1Click:Connect(function() Rc7ScreenGui:Destroy() end)
+BtnNewSession.MouseButton1Click:Connect(function() InputBox.Text = "" CoolGui.Enabled = false end)
+BtnRJ.MouseButton1Click:Connect(function() game:GetService("TeleportService"):Teleport(game.PlaceId, LocalPlayer) end)
+
+local function RigTransform(targetType)
+    local char = LocalPlayer.Character
+    if not char then return end
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if hum then
+        if targetType == "R6" then
+            hum:ChangeState(Enum.HumanoidStateType.Dead)
+        else
+            hum:BuildRigFromAttachments()
+        end
+    end
+end
+BtnR6.MouseButton1Click:Connect(function() RigTransform("R6") end)
+BtnR15.MouseButton1Click:Connect(function() RigTransform("R15") end)
+
+BtnParticel.MouseButton1Click:Connect(function()
+    for _, v in pairs(Workspace:GetDescendants()) do
+        if v:IsA("BasePart") then
+            local p = Instance.new("ParticleEmitter", v)
+            p.Texture = ID_PARTICLE
+            p.Rate = 60
+            p.Speed = NumberRange.new(5, 12)
+            
+            local tr = Instance.new("Trail", v)
+            local a0 = Instance.new("Attachment", v)
+            local a1 = Instance.new("Attachment", v)
+            a1.Position = Vector3.new(0, 2, 0)
+            tr.Attachment0 = a0
+            tr.Attachment1 = a1
+            tr.Texture = ID_PARTICLE
+            tr.Lifetime = 0.6
+        end
+    end
+end)
+
+BtnDecalSpam.MouseButton1Click:Connect(function()
+    for _, obj in pairs(Workspace:GetDescendants()) do
+        if obj:IsA("BasePart") then
+            for _, face in pairs(Enum.NormalId:GetEnumItems()) do
+                local d = Instance.new("Decal")
+                d.Texture = ID_DECAL
+                d.Face = face
+                d.Parent = obj
+            end
+        end
+    end
+
+    for _, plr in pairs(Players:GetPlayers()) do
+        if plr.Character then
+            for _, child in pairs(plr.Character:GetDescendants()) do
+                if child:IsA("Decal") and child.Name == "face" then child:Destroy() end
+            end
+            local head = plr.Character:FindFirstChild("Head")
+            if head then
+                local f = Instance.new("Decal")
+                f.Name = "face"
+                f.Texture = ID_FACE
+                f.Parent = head
+            end
+        end
+    end
+end)
+
+BtnSkybox.MouseButton1Click:Connect(function()
+    for _, v in pairs(Lighting:GetChildren()) do if v:IsA("Sky") then v:Destroy() end end
+    local sky = Instance.new("Sky")
+    sky.SkyboxBk = ID_SKYBOX
+    sky.SkyboxDn = ID_SKYBOX
+    sky.SkyboxFt = ID_SKYBOX
+    sky.SkyboxLf = ID_SKYBOX
+    sky.SkyboxRt = ID_SKYBOX
+    sky.SkyboxUp = ID_SKYBOX
+    sky.Parent = Lighting
+
+    task.spawn(function()
+        Lighting.FogEnd = 150
+        while task.wait(0.2) do
+            Lighting.FogColor = Color3.fromRGB(math.random(0,255), math.random(0,255), math.random(0,255))
+        end
+    end)
+end)
+
+BtnMusic.MouseButton1Click:Connect(function()
+    if not Sound.IsPlaying then Sound:Play() end
+end)
+
+BtnDislocate.MouseButton1Click:Connect(function()
+    local char = LocalPlayer.Character
+    if not char then return end
+    
+    local head = char:FindFirstChild("Head")
+    local torso = char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso")
+    
+    if head and head:FindFirstChildOfClass("JointInstance") then
+        head:FindFirstChildOfClass("JointInstance").C0 = CFrame.new(-2, 0, 0)
+    end
+    if torso and torso:FindFirstChildOfClass("JointInstance") then
+        torso:FindFirstChildOfClass("JointInstance").C0 = CFrame.new(2, 0, 0)
+    end
+end)
+
+local destructionActive = false
+BtnDestruction.MouseButton1Click:Connect(function()
+    destructionActive = not destructionActive
+    if destructionActive then
+        local char = LocalPlayer.Character
+        if not char then return end
+        
+        char.PrimaryPart.Touched:Connect(function(hit)
+            if destructionActive and hit and not hit:IsDescendantOf(char) and not hit.Parent:FindFirstChildOfClass("Humanoid") then
+                hit.Anchored = false
+                
+                local exp = Instance.new("Explosion")
+                exp.Position = hit.Position
+                exp.BlastRadius = 10
+                exp.BlastPressure = 500000
+                exp.Parent = Workspace
+                
+                hit:BreakJoints()
+                hit.Velocity = Vector3.new(math.random(-50,50), 50, math.random(-50,50))
+            end
+        end)
+    end
+end)
+
+BtnFire.MouseButton1Click:Connect(function()
+    for _, part in pairs(Workspace:GetDescendants()) do
+        if part:IsA("BasePart") then
+            local fire = Instance.new("Fire")
+            fire.Size = 10
+            fire.Heat = 15
+            fire.Parent = part
+        end
+    end
+end)
+
+local flying = false
+BtnFly.MouseButton1Click:Connect(function()
+    flying = not flying
+    local char = LocalPlayer.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    local hrp = char.HumanoidRootPart
+    
+    if flying then
+        local bv = Instance.new("BodyVelocity")
+        bv.Name = "FlyVelocity"
+        bv.MaxForce = Vector3.new(1e9, 1e9, 1e9)
+        bv.Parent = hrp
+        
+        task.spawn(function()
+            while flying do
+                task.wait()
+                local hum = char:FindFirstChildOfClass("Humanoid")
+                if hum then
+                    bv.Velocity = hum.MoveDirection * 50 + Vector3.new(0, 0.5, 0)
+                end
+            end
+            bv:Destroy()
+        end)
+    end
+end)
+
+--------------------------------------------------
+-- 6. ADVANCED FLING GRAB SYSTEM
+--------------------------------------------------
+local grabModeActive = false
+local GrabGui = Instance.new("ScreenGui")
+GrabGui.Name = "GrabControls"
+GrabGui.Parent = PlayerGui
+
+local GrabActionBtn = Instance.new("ImageButton")
+GrabActionBtn.Size = UDim2.new(0, 60, 0, 60)
+GrabActionBtn.Position = UDim2.new(0.8, 0, 0.6, 0)
+GrabActionBtn.Image = "rbxassetid://1095210207"
+GrabActionBtn.Visible = false
+GrabActionBtn.Parent = GrabGui
+
+local targetVictim = nil
+local isChoking = false
+
+BtnGrabMode.MouseButton1Click:Connect(function()
+    grabModeActive = not grabModeActive
+    GrabActionBtn.Visible = grabModeActive
+end)
+
+-- Target Detection System
+task.spawn(function()
+    while true do
+        task.wait(0.2)
+        if grabModeActive and not isChoking then
+            local char = LocalPlayer.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                for _, plr in pairs(Players:GetPlayers()) do
+                    if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                        local dist = (char.HumanoidRootPart.Position - plr.Character.HumanoidRootPart.Position).Magnitude
+                        if dist <= 8 then
+                            targetVictim = plr.Character
+                            break
+                        end
+                    end
+                end
+            end
+        end
+    end
+end)
+
+-- Execute Grab & Fling Force
+GrabActionBtn.MouseButton1Click:Connect(function()
+    local char = LocalPlayer.Character
+    if not char or not targetVictim then return end
+
+    local myRightArm = char:FindFirstChild("Right Arm") or char:FindFirstChild("RightHand")
+    local myHRP = char:FindFirstChild("HumanoidRootPart")
+    local vHRP = targetVictim:FindFirstChild("HumanoidRootPart")
+
+    if not isChoking and vHRP and myRightArm then
+        isChoking = true
+        
+        -- Animation Raise Right Arm
+        local shoulder = char:FindFirstChild("Right Shoulder", true)
+        if shoulder then
+            shoulder.C0 = CFrame.new(1, 0.5, 0) * CFrame.Angles(math.rad(90), 0, 0)
+        end
+        
+        -- Lock Target Position to Hand
+        local weld = Instance.new("Weld")
+        weld.Name = "ChokeHold"
+        weld.Part0 = myRightArm
+        weld.Part1 = vHRP
+        weld.C0 = CFrame.new(0, -1, -1)
+        weld.Parent = myRightArm
+
+    elseif isChoking and vHRP then
+        -- Wind Up Action
+        local shoulder = char:FindFirstChild("Right Shoulder", true)
+        if shoulder then
+            shoulder.C0 = CFrame.new(1, 0.5, 0) * CFrame.Angles(math.rad(90), math.rad(-60), 0)
+            task.wait(0.25)
+            shoulder.C0 = CFrame.new(1, 0.5, 0) * CFrame.Angles(math.rad(90), 0, 0)
+        end
+
+        -- Break Weld
+        if myRightArm:FindFirstChild("ChokeHold") then
+            myRightArm.ChokeHold:Destroy()
+        end
+        
+        -- PHYSICAL FLING ENGINE (Pushed target away at High Speed Velocity)
+        local throwDir = myHRP.CFrame.LookVector * 5000 + Vector3.new(0, 2000, 0)
+        
+        local bav = Instance.new("BodyAngularVelocity")
+        bav.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+        bav.AngularVelocity = Vector3.new(0, 99999, 0)
+        bav.Parent = vHRP
+        
+        local bv = Instance.new("BodyVelocity")
+        bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+        bv.Velocity = throwDir
+        bv.Parent = vHRP
+
+        task.spawn(function()
+            task.wait(0.15)
+            bv:Destroy()
+            bav:Destroy()
+        end)
+
+        isChoking = false
+        targetVictim = nil
+    end
+end)
